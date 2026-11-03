@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { useJob } from '../../context/JobContext';
 import { useCandidates } from '../../hooks/useCandidates';
 import { CandidateTable } from './CandidateTable';
@@ -28,18 +29,18 @@ export const CandidateWorkspace: React.FC = () => {
   const handleStartScoring = async () => {
     try {
       await startScoring();
-      alert('AI scoring task initiated! Progress will stream in live cards and update candidate scores.');
+      toast.success('AI scoring task initiated! Real-time progress is streaming.');
     } catch (err: any) {
-      alert(`Scoring failed to start: ${err.message}`);
+      toast.error(`Scoring failed to start: ${err.message}`);
     }
   };
 
   const handleStartSourcing = async () => {
     try {
       await startSourcing(8);
-      alert('Candidate sourcing started from Serper / Web Search! Sourced profiles will appear here.');
+      toast.success('Candidate sourcing started from Web Search!');
     } catch (err: any) {
-      alert(`Sourcing failed to start: ${err.message}`);
+      toast.error(`Sourcing failed to start: ${err.message}`);
     }
   };
 

@@ -1,7 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { useChat } from '../../hooks/useChat';
 import { ChatMessageItem } from './ChatMessageItem';
 import { ChatInput } from './ChatInput';
+import { ConfirmModal } from '../common/ConfirmModal';
 import { Bot, Trash2, Sparkles, Plus } from 'lucide-react';
 import { useJob } from '../../context/JobContext';
 
@@ -9,19 +11,45 @@ export const ChatContainer: React.FC = () => {
   const { messages, isLoading, sendMessage, startNewSession, deleteSession } = useChat();
   const { activeJob } = useJob();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  const handleDeleteSession = () => {
-    if (window.confirm('Are you sure you want to delete this session and all its messages from the database?')) {
-      deleteSession();
+  const handleStartNewSession = () => {
+    startNewSession();
+    toast.info('Started a new conversation session');
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteSession();
+      setIsDeleteModalOpen(false);
+      toast.success('Chat session deleted from database');
+    } catch {
+      toast.error('Failed to delete chat session');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Chat Session"
+        message="Are you sure you want to delete this chat session? All conversation messages in this session will be permanently removed from MongoDB."
+        confirmText="Delete Session"
+        variant="danger"
+        isLoading={isDeleting}
+      />
+
       {/* Chat Copilot Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200">
         <div className="flex items-center gap-2.5">
@@ -41,7 +69,7 @@ export const ChatContainer: React.FC = () => {
 
         <div className="flex items-center gap-1.5">
           <button
-            onClick={startNewSession}
+            onClick={handleStartNewSession}
             className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200 rounded-lg transition flex items-center gap-1 shadow-xs"
             title="Start a new chat session"
           >
@@ -51,7 +79,7 @@ export const ChatContainer: React.FC = () => {
 
           {messages.length > 0 && (
             <button
-              onClick={handleDeleteSession}
+              onClick={() => setIsDeleteModalOpen(true)}
               className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition text-xs flex items-center gap-1"
               title="Delete this session from database"
             >

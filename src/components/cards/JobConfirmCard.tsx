@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '../common/Button';
 import { Check, Edit3, Briefcase, MapPin, Award } from 'lucide-react';
 import { api } from '../../services/api';
@@ -44,13 +45,14 @@ export const JobConfirmCard: React.FC<JobConfirmCardProps> = ({ draft, onConfirm
       });
 
       setIsConfirmed(true);
+      toast.success(`Job "${title}" successfully created and activated!`);
       refreshJobs();
       if (res.data?._id) {
         selectJob(res.data._id);
       }
       if (onConfirmed) onConfirmed(res.data);
     } catch (err: any) {
-      alert(`Failed to save job: ${err.message}`);
+      toast.error(`Failed to save job: ${err.message}`);
     } finally {
       setIsSaving(false);
     }

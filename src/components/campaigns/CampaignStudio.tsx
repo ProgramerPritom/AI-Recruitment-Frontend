@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { Campaign, CampaignStep } from '../../types';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
@@ -77,8 +78,9 @@ export const CampaignStudio: React.FC<CampaignStudioProps> = ({
     try {
       await onUpdateDraft(campaign._id, steps);
       setIsEditing(false);
+      toast.success('Campaign email draft saved successfully');
     } catch (err: any) {
-      alert(`Save failed: ${err.message}`);
+      toast.error(`Save failed: ${err.message}`);
     } finally {
       setIsSaving(false);
     }

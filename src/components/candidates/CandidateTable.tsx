@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { toast } from 'sonner';
 import { Candidate, CandidateStatus } from '../../types';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
@@ -87,10 +88,12 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
     if (selectedIds.length === 0) return;
     setIsBulkProcessing(true);
     try {
+      const count = selectedIds.length;
       await onBulkReview(selectedIds, decision);
       setSelectedIds([]);
+      toast.success(`${count} candidate${count > 1 ? 's' : ''} successfully ${decision === 'accept' ? 'accepted' : 'rejected'}`);
     } catch (err: any) {
-      alert(`Bulk action failed: ${err.message}`);
+      toast.error(`Bulk action failed: ${err.message}`);
     } finally {
       setIsBulkProcessing(false);
     }

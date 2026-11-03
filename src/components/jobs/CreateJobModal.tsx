@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Sparkles, FileText } from 'lucide-react';
@@ -38,7 +39,7 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({ isOpen, onClose,
       });
       setExtractedDraft(res.data?.data || res.data);
     } catch (err: any) {
-      alert(`Job extraction failed: ${err.message}`);
+      toast.error(`Job extraction failed: ${err.message}`);
     } finally {
       setIsExtracting(false);
     }
@@ -47,6 +48,7 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({ isOpen, onClose,
   const handleConfirmed = (createdJob: any) => {
     setExtractedDraft(null);
     setContent('');
+    toast.success('New job successfully created and set as active!');
     if (onJobCreated) onJobCreated(createdJob);
     onClose();
   };

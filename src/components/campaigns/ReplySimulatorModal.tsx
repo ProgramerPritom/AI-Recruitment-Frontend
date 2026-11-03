@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Candidate } from '../../types';
@@ -73,8 +74,9 @@ export const ReplySimulatorModal: React.FC<ReplySimulatorModalProps> = ({
       queryClient.invalidateQueries({ queryKey: ['candidates', jobId] });
       queryClient.invalidateQueries({ queryKey: ['stats', jobId] });
       queryClient.invalidateQueries({ queryKey: ['activities', jobId] });
+      toast.success('Candidate reply simulated and classified!');
     } catch (err: any) {
-      alert(`Simulation failed: ${err.message}`);
+      toast.error(`Simulation failed: ${err.message}`);
     } finally {
       setIsSimulating(false);
     }
@@ -86,11 +88,12 @@ export const ReplySimulatorModal: React.FC<ReplySimulatorModalProps> = ({
     try {
       await api.post(`/replies/${simulatedResult.reply._id}/send`);
       setReplySentSuccess(true);
+      toast.success('Auto-drafted response sent to candidate!');
       queryClient.invalidateQueries({ queryKey: ['candidates', jobId] });
       queryClient.invalidateQueries({ queryKey: ['stats', jobId] });
       queryClient.invalidateQueries({ queryKey: ['activities', jobId] });
     } catch (err: any) {
-      alert(`Failed to send response: ${err.message}`);
+      toast.error(`Failed to send response: ${err.message}`);
     } finally {
       setIsSendingReply(false);
     }

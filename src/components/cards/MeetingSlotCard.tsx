@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { Calendar, Check, Clock } from 'lucide-react';
 import { Button } from '../common/Button';
 import { api } from '../../services/api';
@@ -41,9 +42,10 @@ export const MeetingSlotCard: React.FC<MeetingSlotCardProps> = ({
       queryClient.invalidateQueries({ queryKey: ['candidates', activeJobId] });
       queryClient.invalidateQueries({ queryKey: ['stats', activeJobId] });
       queryClient.invalidateQueries({ queryKey: ['activities', activeJobId] });
+      toast.success(`Interview confirmed with ${candidateName}!`);
       if (onBooked) onBooked(res.data);
     } catch (err: any) {
-      alert(`Meeting booking failed: ${err.message}`);
+      toast.error(`Meeting booking failed: ${err.message}`);
     } finally {
       setIsBooking(false);
     }

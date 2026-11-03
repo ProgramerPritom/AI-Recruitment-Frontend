@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { ExternalLink, Check, X, Award, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '../../services/api';
 import { useJob } from '../../context/JobContext';
@@ -41,8 +42,9 @@ export const CandidateReviewCard: React.FC<CandidateReviewCardProps> = ({ candid
       queryClient.invalidateQueries({ queryKey: ['candidates', activeJobId] });
       queryClient.invalidateQueries({ queryKey: ['stats', activeJobId] });
       queryClient.invalidateQueries({ queryKey: ['activities', activeJobId] });
+      toast.success(`Candidate status updated to ${decision}`);
     } catch (err: any) {
-      alert(`Failed to update candidate: ${err.message}`);
+      toast.error(`Failed to update candidate: ${err.message}`);
     } finally {
       setUpdatingId(null);
     }

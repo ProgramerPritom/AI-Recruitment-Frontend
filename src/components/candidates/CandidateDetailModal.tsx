@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
@@ -26,9 +27,10 @@ export const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
     setIsUpdating(true);
     try {
       await onStatusChange(candidate._id, status);
+      toast.success(`Candidate status updated to ${status}`);
       onClose();
     } catch (err: any) {
-      alert(`Status update failed: ${err.message}`);
+      toast.error(`Status update failed: ${err.message}`);
     } finally {
       setIsUpdating(false);
     }

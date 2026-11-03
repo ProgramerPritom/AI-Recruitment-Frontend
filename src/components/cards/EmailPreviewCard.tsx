@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { Mail, Check, Send, AlertTriangle } from 'lucide-react';
 import { Button } from '../common/Button';
 import { api } from '../../services/api';
@@ -42,9 +43,10 @@ export const EmailPreviewCard: React.FC<EmailPreviewCardProps> = ({
     try {
       await api.post(`/campaigns/${campaignId}/approve`);
       setIsApproved(true);
+      toast.success('Campaign approved and ready to dispatch!');
       queryClient.invalidateQueries({ queryKey: ['activities', activeJobId] });
     } catch (err: any) {
-      alert(`Approval failed: ${err.message}`);
+      toast.error(`Approval failed: ${err.message}`);
     } finally {
       setIsApproving(false);
     }
@@ -55,11 +57,12 @@ export const EmailPreviewCard: React.FC<EmailPreviewCardProps> = ({
     try {
       await api.post(`/campaigns/${campaignId}/send`, { stepNumber: currentStep.stepNumber });
       setIsSent(true);
+      toast.success(`Dispatched step ${currentStep.stepNumber} outreach emails!`);
       queryClient.invalidateQueries({ queryKey: ['stats', activeJobId] });
       queryClient.invalidateQueries({ queryKey: ['activities', activeJobId] });
       queryClient.invalidateQueries({ queryKey: ['candidates', activeJobId] });
     } catch (err: any) {
-      alert(`Dispatch failed: ${err.message}`);
+      toast.error(`Dispatch failed: ${err.message}`);
     } finally {
       setIsSending(false);
     }

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Toaster } from 'sonner';
 import { JobProvider, useJob } from './context/JobContext';
 import { SseProvider } from './context/SseContext';
 import { Layout } from './app/Layout';
@@ -20,6 +21,7 @@ const WorkspaceShell: React.FC = () => {
 
   return (
     <>
+      <Toaster position="top-right" richColors closeButton />
       <Layout
         chatComponent={<ChatContainer />}
         candidatesComponent={CandidatesView}
