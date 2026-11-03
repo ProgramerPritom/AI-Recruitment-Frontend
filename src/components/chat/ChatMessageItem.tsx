@@ -41,7 +41,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message }) => 
   const renderCard = (payload?: Record<string, any>) => {
     if (!payload) return null;
 
-    if (payload.cardType === 'job_draft' && payload.draft) {
+    if ((payload.cardType === 'job_draft' || payload.cardType === 'job_confirmation') && payload.draft) {
       return <JobConfirmCard draft={payload.draft} />;
     }
 

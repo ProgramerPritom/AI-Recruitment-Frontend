@@ -2,17 +2,23 @@ import React, { useRef, useEffect } from 'react';
 import { useChat } from '../../hooks/useChat';
 import { ChatMessageItem } from './ChatMessageItem';
 import { ChatInput } from './ChatInput';
-import { Bot, Trash2, Sparkles } from 'lucide-react';
+import { Bot, Trash2, Sparkles, Plus } from 'lucide-react';
 import { useJob } from '../../context/JobContext';
 
 export const ChatContainer: React.FC = () => {
-  const { messages, isLoading, sendMessage, clearChat } = useChat();
+  const { messages, isLoading, sendMessage, startNewSession, deleteSession } = useChat();
   const { activeJob } = useJob();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  const handleDeleteSession = () => {
+    if (window.confirm('Are you sure you want to delete this session and all its messages from the database?')) {
+      deleteSession();
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
@@ -33,16 +39,27 @@ export const ChatContainer: React.FC = () => {
           </div>
         </div>
 
-        {messages.length > 0 && (
+        <div className="flex items-center gap-1.5">
           <button
-            onClick={clearChat}
-            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition text-xs flex items-center gap-1"
-            title="Clear chat history"
+            onClick={startNewSession}
+            className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200 rounded-lg transition flex items-center gap-1 shadow-xs"
+            title="Start a new chat session"
           >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span className="text-[11px] font-medium hidden sm:inline">Clear</span>
+            <Plus className="w-3.5 h-3.5 text-indigo-600" />
+            <span className="text-[11px] font-medium hidden sm:inline">New Session</span>
           </button>
-        )}
+
+          {messages.length > 0 && (
+            <button
+              onClick={handleDeleteSession}
+              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition text-xs flex items-center gap-1"
+              title="Delete this session from database"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span className="text-[11px] font-medium hidden sm:inline">Delete</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Messages Feed */}

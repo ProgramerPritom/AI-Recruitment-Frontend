@@ -89,14 +89,26 @@ export const useChat = () => {
     }
   };
 
-  const clearChat = async () => {
+  const startNewSession = useCallback(() => {
+    const newId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    localStorage.setItem(SESSION_STORAGE_KEY, newId);
+    setSessionId(newId);
+    setMessages([]);
+  }, []);
+
+  const deleteSession = useCallback(async () => {
     try {
       await api.delete(`/chat/history/${sessionId}`);
-      setMessages([]);
-    } catch {
-      setMessages([]);
+    } catch (err) {
+      console.warn('Failed to delete session on backend:', err);
     }
-  };
+    const newId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    localStorage.setItem(SESSION_STORAGE_KEY, newId);
+    setSessionId(newId);
+    setMessages([]);
+  }, [sessionId]);
+
+  const clearChat = deleteSession;
 
   return {
     sessionId,
@@ -104,6 +116,8 @@ export const useChat = () => {
     isLoading,
     sendMessage,
     clearChat,
+    startNewSession,
+    deleteSession,
     reloadHistory: loadHistory,
   };
 };
