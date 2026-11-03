@@ -19,6 +19,10 @@ export interface Job {
   mustHaveSkills: string[];
   niceToHaveSkills: string[];
   seniority?: string;
+  experience?: string;
+  minExperienceYears?: number;
+  responsibilities?: string[];
+  qualifications?: string[];
   location?: string;
   salaryRange?: {
     min?: number;
