@@ -129,6 +129,7 @@ export const CandidateWorkspace: React.FC = () => {
         isOpen={isCsvModalOpen}
         onClose={() => setIsCsvModalOpen(false)}
         jobId={activeJobId}
+        jobTitle={activeJob?.title}
       />
     </div>
   );

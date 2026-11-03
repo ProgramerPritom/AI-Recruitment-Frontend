@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
-import { Upload, FileSpreadsheet, Check, AlertCircle, Download, FileText } from 'lucide-react';
+import { Upload, FileSpreadsheet, Check, AlertCircle, Download, FileText, Briefcase } from 'lucide-react';
 import { api } from '../../services/api';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -9,9 +9,10 @@ interface CsvUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   jobId: string;
+  jobTitle?: string;
 }
 
-export const CsvUploadModal: React.FC<CsvUploadModalProps> = ({ isOpen, onClose, jobId }) => {
+export const CsvUploadModal: React.FC<CsvUploadModalProps> = ({ isOpen, onClose, jobId, jobTitle }) => {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -79,6 +80,14 @@ export const CsvUploadModal: React.FC<CsvUploadModalProps> = ({ isOpen, onClose,
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Import Candidates via CSV" maxWidth="md">
       <div className="space-y-4">
+        {/* Active Target Job Indicator */}
+        <div className="flex items-center gap-2 p-2.5 bg-indigo-50 border border-indigo-100 rounded-lg text-xs text-indigo-900">
+          <Briefcase className="w-4 h-4 text-indigo-600 shrink-0" />
+          <span>
+            Target Job Pipeline: <strong className="font-semibold text-indigo-950">{jobTitle || 'Active Job'}</strong>
+          </span>
+        </div>
+
         {/* Helper info */}
         <div className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
           <span>Supported columns: name, email, profileUrl, skills, experienceSummary</span>
