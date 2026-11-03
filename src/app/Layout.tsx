@@ -11,6 +11,7 @@ import {
   Plus,
   Bot,
   ChevronDown,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -20,6 +21,7 @@ interface LayoutProps {
   analyticsComponent: React.ReactNode;
   activityComponent: React.ReactNode;
   onOpenCreateJob: () => void;
+  onOpenManageJobs: () => void;
 }
 
 export type WorkspaceTab = 'candidates' | 'outreach' | 'analytics' | 'activity';
@@ -31,6 +33,7 @@ export const Layout: React.FC<LayoutProps> = ({
   analyticsComponent,
   activityComponent,
   onOpenCreateJob,
+  onOpenManageJobs,
 }) => {
   const { jobs, activeJob, selectJob } = useJob();
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('candidates');
@@ -91,7 +94,16 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={onOpenManageJobs}
+            className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition flex items-center gap-1.5 shadow-xs"
+            title="Manage all jobs (edit, delete, view)"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Manage Jobs ({jobs.length})</span>
+          </button>
+
           <Button
             size="sm"
             variant="outline"

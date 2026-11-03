@@ -68,8 +68,11 @@ export const JobConfirmCard: React.FC<JobConfirmCardProps> = ({ draft, onConfirm
   );
   const [salaryMin, setSalaryMin] = useState<number | undefined>(draft.salaryRange?.min || 120000);
   const [salaryMax, setSalaryMax] = useState<number | undefined>(draft.salaryRange?.max || 180000);
+  const hasSubmittedRef = React.useRef(false);
 
   const handleConfirm = async () => {
+    if (isSaving || isConfirmed || hasSubmittedRef.current) return;
+    hasSubmittedRef.current = true;
     setIsSaving(true);
     try {
       const parsedMustHave = mustHaveSkills
@@ -117,6 +120,7 @@ export const JobConfirmCard: React.FC<JobConfirmCardProps> = ({ draft, onConfirm
       }
       if (onConfirmed) onConfirmed(res.data);
     } catch (err: any) {
+      hasSubmittedRef.current = false;
       toast.error(`Failed to save job: ${err.message}`);
     } finally {
       setIsSaving(false);
