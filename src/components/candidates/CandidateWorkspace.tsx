@@ -21,6 +21,8 @@ export const CandidateWorkspace: React.FC = () => {
     refetch,
     updateStatus,
     bulkReview,
+    deleteCandidate,
+    bulkDelete,
     startScoring,
     isStartingScoring,
     startSourcing,
@@ -92,8 +94,13 @@ export const CandidateWorkspace: React.FC = () => {
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-bold text-slate-900">Talent Pipeline</h2>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-              {candidates.length} Profiles
+              {candidates.filter((c) => c.status !== 'rejected' && c.status !== 'unsubscribed').length} Active Profiles
             </span>
+            {candidates.some((c) => c.status === 'rejected') && (
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-100">
+                {candidates.filter((c) => c.status === 'rejected').length} Rejected
+              </span>
+            )}
             <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
               <Globe className="w-2.5 h-2.5 text-indigo-500" /> Serper Live Search
             </span>
@@ -153,6 +160,8 @@ export const CandidateWorkspace: React.FC = () => {
           onSelectCandidate={(c) => setSelectedCandidate(c)}
           onStatusChange={(id, status) => updateStatus({ candidateId: id, status })}
           onBulkReview={(ids, decision) => bulkReview({ candidateIds: ids, decision })}
+          onDeleteCandidate={(id) => deleteCandidate(id)}
+          onBulkDelete={(ids) => bulkDelete(ids)}
         />
       </div>
 
@@ -162,6 +171,7 @@ export const CandidateWorkspace: React.FC = () => {
         isOpen={Boolean(selectedCandidate)}
         onClose={() => setSelectedCandidate(null)}
         onStatusChange={(id, status) => updateStatus({ candidateId: id, status })}
+        onDeleteCandidate={(id) => deleteCandidate(id)}
       />
 
       <CsvUploadModal

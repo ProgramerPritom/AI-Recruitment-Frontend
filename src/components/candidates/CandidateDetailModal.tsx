@@ -4,13 +4,14 @@ import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { Candidate, CandidateStatus } from '../../types';
-import { ExternalLink, Mail, Award, CheckCircle, XCircle } from 'lucide-react';
+import { ExternalLink, Mail, Award, CheckCircle, XCircle, Trash2, RotateCcw } from 'lucide-react';
 
 interface CandidateDetailModalProps {
   candidate: Candidate | null;
   isOpen: boolean;
   onClose: () => void;
   onStatusChange: (id: string, status: CandidateStatus) => Promise<any>;
+  onDeleteCandidate?: (id: string) => Promise<any>;
 }
 
 export const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
@@ -18,8 +19,10 @@ export const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
   isOpen,
   onClose,
   onStatusChange,
+  onDeleteCandidate,
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   if (!candidate) return null;
 
@@ -33,6 +36,22 @@ export const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
       toast.error(`Status update failed: ${err.message}`);
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!onDeleteCandidate) return;
+    if (!window.confirm(`Are you sure you want to permanently delete "${candidate.name}" from this recruitment workspace?`)) return;
+
+    setIsDeleting(true);
+    try {
+      await onDeleteCandidate(candidate._id);
+      toast.success(`Candidate "${candidate.name}" deleted permanently.`);
+      onClose();
+    } catch (err: any) {
+      toast.error(`Delete failed: ${err.message}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -172,6 +191,17 @@ export const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
               </Button>
             )}
 
+            {candidate.status === 'rejected' && (
+              <Button
+                size="sm"
+                variant="primary"
+                isLoading={isUpdating}
+                onClick={() => handleStatusUpdate('sourced')}
+              >
+                <RotateCcw className="w-3.5 h-3.5 mr-1" /> Restore to Sourced
+              </Button>
+            )}
+
             {candidate.status !== 'rejected' && (
               <Button
                 size="sm"
@@ -180,6 +210,18 @@ export const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
                 onClick={() => handleStatusUpdate('rejected')}
               >
                 <XCircle className="w-3.5 h-3.5 mr-1" /> Reject
+              </Button>
+            )}
+
+            {onDeleteCandidate && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-rose-600 hover:bg-rose-50 border-rose-200 ml-auto"
+                isLoading={isDeleting}
+                onClick={handleDelete}
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1 text-rose-600" /> Delete Permanently
               </Button>
             )}
           </div>

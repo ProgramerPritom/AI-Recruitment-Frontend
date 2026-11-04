@@ -95,6 +95,31 @@ export const useCandidates = (statusFilter?: string) => {
     },
   });
 
+  const deleteCandidateMutation = useMutation({
+    mutationFn: async (candidateId: string) => {
+      const res: any = await api.delete(`/candidates/${candidateId}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['candidates', activeJobId] });
+      queryClient.invalidateQueries({ queryKey: ['stats', activeJobId] });
+      queryClient.invalidateQueries({ queryKey: ['activities', activeJobId] });
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (candidateIds: string[]) => {
+      if (!activeJobId) throw new Error('No active job');
+      const res: any = await api.post(`/jobs/${activeJobId}/candidates/bulk-delete`, { candidateIds });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['candidates', activeJobId] });
+      queryClient.invalidateQueries({ queryKey: ['stats', activeJobId] });
+      queryClient.invalidateQueries({ queryKey: ['activities', activeJobId] });
+    },
+  });
+
   return {
     candidates,
     isLoading: isLoading || isRefetching,
@@ -103,6 +128,10 @@ export const useCandidates = (statusFilter?: string) => {
     isUpdatingStatus: statusMutation.isPending,
     bulkReview: bulkReviewMutation.mutateAsync,
     isBulkReviewing: bulkReviewMutation.isPending,
+    deleteCandidate: deleteCandidateMutation.mutateAsync,
+    isDeletingCandidate: deleteCandidateMutation.isPending,
+    bulkDelete: bulkDeleteMutation.mutateAsync,
+    isBulkDeleting: bulkDeleteMutation.isPending,
     startScoring: startScoringMutation.mutateAsync,
     isStartingScoring: startScoringMutation.isPending,
     startSourcing: startSourcingMutation.mutateAsync,

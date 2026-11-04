@@ -17,6 +17,8 @@ import {
   Globe,
   Upload,
   FileText,
+  Trash2,
+  RotateCcw,
 } from 'lucide-react';
 
 interface CandidateTableProps {
@@ -28,10 +30,13 @@ interface CandidateTableProps {
   onSelectCandidate: (candidate: Candidate) => void;
   onStatusChange: (id: string, status: CandidateStatus) => Promise<any>;
   onBulkReview: (ids: string[], decision: 'accept' | 'reject') => Promise<any>;
+  onDeleteCandidate?: (id: string) => Promise<any>;
+  onBulkDelete?: (ids: string[]) => Promise<any>;
 }
 
 const STATUS_FILTERS: Array<{ id: string; label: string }> = [
-  { id: 'all', label: 'All' },
+  { id: 'active', label: 'Active Pipeline' },
+  { id: 'all', label: 'All Profiles' },
   { id: 'sourced', label: 'Sourced' },
   { id: 'accepted', label: 'Accepted' },
   { id: 'contacted', label: 'Contacted' },
@@ -53,8 +58,10 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
   onSelectCandidate,
   onStatusChange,
   onBulkReview,
+  onDeleteCandidate,
+  onBulkDelete,
 }) => {
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('active');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
@@ -65,7 +72,11 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
   const filteredCandidates = useMemo(() => {
     return candidates.filter((c) => {
       const matchesStatus =
-        selectedStatus === 'all' ? true : c.status.toLowerCase() === selectedStatus.toLowerCase();
+        selectedStatus === 'active'
+          ? c.status.toLowerCase() !== 'rejected' && c.status.toLowerCase() !== 'unsubscribed'
+          : selectedStatus === 'all'
+          ? true
+          : c.status.toLowerCase() === selectedStatus.toLowerCase();
 
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
@@ -111,6 +122,23 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (!onBulkDelete || selectedIds.length === 0) return;
+    if (!window.confirm(`Permanently delete ${selectedIds.length} candidate(s) from database?`)) return;
+
+    setIsBulkProcessing(true);
+    try {
+      const count = selectedIds.length;
+      await onBulkDelete(selectedIds);
+      setSelectedIds([]);
+      toast.success(`${count} candidate${count > 1 ? 's' : ''} permanently deleted.`);
+    } catch (err: any) {
+      toast.error(`Bulk delete failed: ${err.message}`);
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
   const getScoreBadge = (score?: number) => {
     if (score === undefined || score === null) {
       return <span className="text-xs text-slate-400">Unscored</span>;
@@ -145,7 +173,9 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 text-xs">
           {STATUS_FILTERS.map((tab) => {
             const count =
-              tab.id === 'all'
+              tab.id === 'active'
+                ? candidates.filter((c) => c.status.toLowerCase() !== 'rejected' && c.status.toLowerCase() !== 'unsubscribed').length
+                : tab.id === 'all'
                 ? candidates.length
                 : candidates.filter((c) => c.status.toLowerCase() === tab.id).length;
             const isSelected = selectedStatus === tab.id;
@@ -228,6 +258,17 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
             >
               <X className="w-3.5 h-3.5 mr-1" /> Reject Selected
             </Button>
+            {onBulkDelete && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-rose-600 hover:bg-rose-50 border-rose-200"
+                isLoading={isBulkProcessing}
+                onClick={handleBulkDelete}
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1 text-rose-600" /> Delete Selected
+              </Button>
+            )}
             <button
               onClick={() => setSelectedIds([])}
               className="text-xs text-slate-500 hover:text-slate-800 ml-2"
@@ -434,11 +475,40 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
                             <button
                               onClick={() => onStatusChange(candidate._id, 'rejected')}
                               className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded border border-slate-200"
-                              title="Reject candidate"
+                              title="Reject candidate (archive)"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
                           </>
+                        )}
+
+                        {candidate.status === 'rejected' && (
+                          <button
+                            onClick={() => onStatusChange(candidate._id, 'sourced')}
+                            className="px-2 py-0.5 text-[11px] text-indigo-600 hover:bg-indigo-50 rounded border border-indigo-200 font-medium flex items-center gap-1"
+                            title="Restore candidate to active pipeline"
+                          >
+                            <RotateCcw className="w-2.5 h-2.5" /> Restore
+                          </button>
+                        )}
+
+                        {onDeleteCandidate && (
+                          <button
+                            onClick={async () => {
+                              if (window.confirm(`Permanently delete "${candidate.name}" from this job and database?`)) {
+                                try {
+                                  await onDeleteCandidate(candidate._id);
+                                  toast.success(`Candidate "${candidate.name}" deleted permanently.`);
+                                } catch (err: any) {
+                                  toast.error(`Delete failed: ${err.message}`);
+                                }
+                              }
+                            }}
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded border border-slate-200"
+                            title="Delete candidate permanently"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         )}
 
                         <button
