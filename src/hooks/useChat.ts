@@ -36,7 +36,7 @@ export const useChat = () => {
 
   useEffect(() => {
     loadHistory();
-  }, [loadHistory, activeJobId]);
+  }, [loadHistory]);
 
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;

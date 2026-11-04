@@ -36,11 +36,26 @@ interface JobConfirmCardProps {
 }
 
 export const JobConfirmCard: React.FC<JobConfirmCardProps> = ({ draft, onConfirmed }) => {
-  const { refreshJobs, selectJob } = useJob();
+  const { jobs, refreshJobs, selectJob } = useJob();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isConfirmed, setIsConfirmed] = useState(false);
   const [showFullDetails, setShowFullDetails] = useState(true);
+
+  // Check if this job draft is already confirmed or exists in the database
+  const normalizedTitle = (draft.title || '').trim().toLowerCase();
+  const isAlreadyInDatabase = Boolean(
+    normalizedTitle && jobs.some((j) => j.title.trim().toLowerCase() === normalizedTitle)
+  );
+  const storageKey = `aironauts_job_confirmed_${normalizedTitle}`;
+  const isLocallyConfirmed = typeof window !== 'undefined' && localStorage.getItem(storageKey) === 'true';
+
+  const [isConfirmed, setIsConfirmed] = useState(isAlreadyInDatabase || isLocallyConfirmed);
+
+  React.useEffect(() => {
+    if (isAlreadyInDatabase || isLocallyConfirmed) {
+      setIsConfirmed(true);
+    }
+  }, [isAlreadyInDatabase, isLocallyConfirmed]);
 
   // Editable state
   const [title, setTitle] = useState(draft.title || 'Senior Software Engineer');
@@ -113,6 +128,9 @@ export const JobConfirmCard: React.FC<JobConfirmCardProps> = ({ draft, onConfirm
       });
 
       setIsConfirmed(true);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(storageKey, 'true');
+      }
       toast.success(`Job "${title}" successfully created and activated!`);
       refreshJobs();
       if (res.data?._id) {
@@ -393,7 +411,13 @@ export const JobConfirmCard: React.FC<JobConfirmCardProps> = ({ draft, onConfirm
         <span className="text-[11px] text-slate-400">
           Requires recruiter confirmation before pipeline activation.
         </span>
-        <Button size="sm" variant="primary" isLoading={isSaving} onClick={handleConfirm}>
+        <Button
+          size="sm"
+          variant="primary"
+          isLoading={isSaving}
+          disabled={isSaving || isConfirmed}
+          onClick={handleConfirm}
+        >
           <Check className="w-3.5 h-3.5 mr-1" /> Confirm & Create Job
         </Button>
       </div>
