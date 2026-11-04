@@ -6,6 +6,7 @@ import { useCandidates } from '../../hooks/useCandidates';
 import { CandidateTable } from './CandidateTable';
 import { CandidateDetailModal } from './CandidateDetailModal';
 import { CsvUploadModal } from './CsvUploadModal';
+import { SourceCandidateModal } from './SourceCandidateModal';
 import { Button } from '../common/Button';
 import { Candidate } from '../../types';
 import { api } from '../../services/api';
@@ -28,6 +29,7 @@ export const CandidateWorkspace: React.FC = () => {
 
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+  const [isSourceModalOpen, setIsSourceModalOpen] = useState(false);
 
   // Poll for active background tasks (e.g. Sourcing or Scoring)
   const { data: activeTask } = useQuery({
@@ -62,8 +64,9 @@ export const CandidateWorkspace: React.FC = () => {
     }
   };
 
-  const handleStartSourcing = async () => {
+  const handleConfirmSourcing = async () => {
     try {
+      setIsSourceModalOpen(false);
       await startSourcing(8);
       toast.success('Live candidate sourcing initiated via Google Search (Serper API)!');
       queryClient.invalidateQueries({ queryKey: ['activeTask', activeJobId] });
@@ -114,7 +117,7 @@ export const CandidateWorkspace: React.FC = () => {
             size="sm"
             variant="outline"
             isLoading={isStartingSourcing || (isTaskRunning && activeTask?.type === 'sourcing')}
-            onClick={handleStartSourcing}
+            onClick={() => setIsSourceModalOpen(true)}
             title="Search and extract real candidate profiles using Serper Dev API"
           >
             <Search className="w-3.5 h-3.5 mr-1 text-indigo-600" /> Source Web (8)
@@ -145,7 +148,7 @@ export const CandidateWorkspace: React.FC = () => {
           candidates={candidates}
           isLoading={isLoading}
           activeTask={activeTask}
-          onStartSourcing={handleStartSourcing}
+          onStartSourcing={() => setIsSourceModalOpen(true)}
           onOpenUploadCsv={() => setIsCsvModalOpen(true)}
           onSelectCandidate={(c) => setSelectedCandidate(c)}
           onStatusChange={(id, status) => updateStatus({ candidateId: id, status })}
@@ -166,6 +169,15 @@ export const CandidateWorkspace: React.FC = () => {
         onClose={() => setIsCsvModalOpen(false)}
         jobId={activeJobId}
         jobTitle={activeJob?.title}
+      />
+
+      <SourceCandidateModal
+        isOpen={isSourceModalOpen}
+        onClose={() => setIsSourceModalOpen(false)}
+        onConfirm={handleConfirmSourcing}
+        isLoading={isStartingSourcing}
+        jobTitle={activeJob?.title}
+        mustHaveSkills={activeJob?.mustHaveSkills}
       />
     </div>
   );
