@@ -16,6 +16,7 @@ import {
   Loader2,
   Globe,
   Upload,
+  FileText,
 } from 'lucide-react';
 
 interface CandidateTableProps {
@@ -316,7 +317,7 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
                       )}
                       {onOpenUploadCsv && (
                         <Button size="sm" variant="primary" onClick={onOpenUploadCsv}>
-                          <Upload className="w-3.5 h-3.5 mr-1" /> Upload CSV
+                          <FileText className="w-3.5 h-3.5 mr-1" /> Upload CV / Resume
                         </Button>
                       )}
                     </div>

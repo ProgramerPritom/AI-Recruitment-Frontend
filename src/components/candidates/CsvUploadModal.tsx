@@ -61,7 +61,19 @@ export const CsvUploadModal: React.FC<CsvUploadModalProps> = ({ isOpen, onClose,
   const [parsedCandidateResult, setParsedCandidateResult] = useState<any>(null);
   const [cvErrorMsg, setCvErrorMsg] = useState<string | null>(null);
 
-  const handleDownloadSample = () => {
+  const handleDownloadSampleResume = () => {
+    const resumeText = SAMPLE_RAW_CV;
+    const blob = new Blob([resumeText], { type: 'text/plain;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'Sample_Candidate_Resume.txt');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadSampleCsv = () => {
     const csvContent =
       'name,email,profileUrl,skills,experienceSummary\n' +
       'Tanvir Ahmed,tanvir.dev@gmail.com,https://linkedin.com/in/tanvir-ahmed,"React, Node.js, MongoDB, Express, TypeScript, Python",7 years MERN stack and AI engineering experience\n' +
@@ -172,8 +184,8 @@ export const CsvUploadModal: React.FC<CsvUploadModalProps> = ({ isOpen, onClose,
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <Upload className="w-3.5 h-3.5" />
-            Upload File (CSV / Resumes)
+            <FileText className="w-3.5 h-3.5" />
+            Upload Resume / CV (PDF, Word, TXT)
           </button>
           <button
             type="button"
@@ -193,14 +205,24 @@ export const CsvUploadModal: React.FC<CsvUploadModalProps> = ({ isOpen, onClose,
         {activeTab === 'file' && (
           <div className="space-y-3.5">
             <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-slate-600 text-[11px]">
-              <span>Supports CSV with applicant details or raw resume text columns. AI extracts skills & scores match.</span>
-              <button
-                type="button"
-                onClick={handleDownloadSample}
-                className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-semibold shrink-0 ml-2"
-              >
-                <Download className="w-3.5 h-3.5" /> Sample CSV
-              </button>
+              <span>Upload candidate CVs in PDF, Word (.docx), or TXT format. AI extracts skills & scores matches.</span>
+              <div className="flex items-center gap-2 shrink-0 ml-2">
+                <button
+                  type="button"
+                  onClick={handleDownloadSampleResume}
+                  className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-semibold"
+                >
+                  <FileText className="w-3.5 h-3.5" /> Sample Resume (.txt)
+                </button>
+                <span className="text-slate-300">|</span>
+                <button
+                  type="button"
+                  onClick={handleDownloadSampleCsv}
+                  className="flex items-center gap-1 text-slate-600 hover:text-slate-800 font-medium"
+                >
+                  <Download className="w-3.5 h-3.5" /> CSV List
+                </button>
+              </div>
             </div>
 
             {!fileResult && (
@@ -215,12 +237,12 @@ export const CsvUploadModal: React.FC<CsvUploadModalProps> = ({ isOpen, onClose,
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".csv,.txt"
+                  accept=".pdf,.docx,.doc,.txt,.csv"
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-600 mb-2">
-                  {selectedFile ? <FileSpreadsheet className="w-5 h-5 text-indigo-600" /> : <Upload className="w-5 h-5" />}
+                <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center mx-auto text-indigo-600 mb-2">
+                  <FileText className="w-5 h-5 text-indigo-600" />
                 </div>
                 {selectedFile ? (
                   <div>
@@ -229,8 +251,8 @@ export const CsvUploadModal: React.FC<CsvUploadModalProps> = ({ isOpen, onClose,
                   </div>
                 ) : (
                   <div>
-                    <p className="text-xs font-semibold text-slate-800">Click to browse or drop CSV / Candidate file</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Automatic column detection & deduplication</p>
+                    <p className="text-xs font-semibold text-slate-800">Click to browse or drop Candidate CV / Resume</p>
+                    <p className="text-[11px] text-slate-500 mt-1">Supports PDF (.pdf), Word (.docx, .doc), TXT, or CSV</p>
                   </div>
                 )}
               </div>
@@ -244,22 +266,73 @@ export const CsvUploadModal: React.FC<CsvUploadModalProps> = ({ isOpen, onClose,
             )}
 
             {fileResult && (
-              <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800">
-                  <Check className="w-4 h-4 text-emerald-600" />
-                  <span>File Processed & Candidates Saved to MongoDB</span>
-                </div>
+              <div className="space-y-3">
+                {fileResult.candidates && fileResult.candidates.length === 1 ? (
+                  <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="w-5 h-5 text-emerald-600" />
+                        <div>
+                          <h4 className="font-bold text-slate-900 text-xs">
+                            {fileResult.candidates[0].name || 'Applicant Candidate'}
+                          </h4>
+                          <p className="text-[11px] text-slate-500">
+                            {fileResult.candidates[0].email || 'Email captured'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                          <Award className="w-3.5 h-3.5 text-emerald-600" />
+                          Match Score: {fileResult.candidates[0].score || 0}%
+                        </span>
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                    <span className="text-slate-500">Imported & AI Scored</span>
-                    <p className="text-lg font-bold text-emerald-600">{fileResult.importedCount || 0}</p>
+                    <div className="bg-white p-3 rounded-lg border border-emerald-100 space-y-2">
+                      <div>
+                        <span className="text-[11px] font-semibold text-slate-700">Extracted Skills:</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {(fileResult.candidates[0].skills || []).map((skill: string, idx: number) => (
+                            <span
+                              key={idx}
+                              className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-semibold"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {fileResult.candidates[0].scoreReason && (
+                        <div>
+                          <span className="text-[11px] font-semibold text-slate-700">AI Score Rationale:</span>
+                          <p className="text-[11px] text-slate-600 leading-relaxed mt-0.5">
+                            {fileResult.candidates[0].scoreReason}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                    <span className="text-slate-500">Duplicates Skipped</span>
-                    <p className="text-lg font-bold text-amber-600">{fileResult.duplicateCount || 0}</p>
+                ) : (
+                  <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800">
+                      <Check className="w-4 h-4 text-emerald-600" />
+                      <span>Candidate Document Processed & Saved to MongoDB</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                        <span className="text-slate-500">Imported & AI Scored</span>
+                        <p className="text-lg font-bold text-emerald-600">{fileResult.importedCount || 0}</p>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-lg border border-slate-200">
+                        <span className="text-slate-500">Duplicates Skipped</span>
+                        <p className="text-lg font-bold text-amber-600">{fileResult.duplicateCount || 0}</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>
@@ -370,7 +443,7 @@ export const CsvUploadModal: React.FC<CsvUploadModalProps> = ({ isOpen, onClose,
                   isLoading={isUploading}
                   onClick={handleUploadFile}
                 >
-                  <FileText className="w-3.5 h-3.5 mr-1" /> Upload & Parse File
+                  <FileText className="w-3.5 h-3.5 mr-1" /> Upload & Parse Resume / CV
                 </Button>
               ) : (
                 <Button

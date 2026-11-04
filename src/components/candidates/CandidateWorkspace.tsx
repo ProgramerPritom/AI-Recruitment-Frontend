@@ -10,7 +10,7 @@ import { SourceCandidateModal } from './SourceCandidateModal';
 import { Button } from '../common/Button';
 import { Candidate } from '../../types';
 import { api } from '../../services/api';
-import { Upload, Sparkles, RefreshCw, Search, Globe } from 'lucide-react';
+import { Upload, Sparkles, RefreshCw, Search, Globe, FileText } from 'lucide-react';
 
 export const CandidateWorkspace: React.FC = () => {
   const { activeJobId, activeJob } = useJob();
@@ -137,7 +137,7 @@ export const CandidateWorkspace: React.FC = () => {
             variant="primary"
             onClick={() => setIsCsvModalOpen(true)}
           >
-            <Upload className="w-3.5 h-3.5 mr-1" /> Upload CSV
+            <FileText className="w-3.5 h-3.5 mr-1" /> Upload CV / Resume
           </Button>
         </div>
       </div>
