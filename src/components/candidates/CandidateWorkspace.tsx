@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useJob } from '../../context/JobContext';
 import { useCandidates } from '../../hooks/useCandidates';
 import { CandidateTable } from './CandidateTable';
@@ -7,10 +8,12 @@ import { CandidateDetailModal } from './CandidateDetailModal';
 import { CsvUploadModal } from './CsvUploadModal';
 import { Button } from '../common/Button';
 import { Candidate } from '../../types';
-import { Upload, Sparkles, RefreshCw, Search } from 'lucide-react';
+import { api } from '../../services/api';
+import { Upload, Sparkles, RefreshCw, Search, Globe } from 'lucide-react';
 
 export const CandidateWorkspace: React.FC = () => {
   const { activeJobId, activeJob } = useJob();
+  const queryClient = useQueryClient();
   const {
     candidates,
     isLoading,
@@ -26,10 +29,34 @@ export const CandidateWorkspace: React.FC = () => {
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
 
+  // Poll for active background tasks (e.g. Sourcing or Scoring)
+  const { data: activeTask } = useQuery({
+    queryKey: ['activeTask', activeJobId],
+    queryFn: async () => {
+      if (!activeJobId) return null;
+      try {
+        const res: any = await api.get(`/jobs/${activeJobId}/tasks/active`);
+        return res.data?.data || res.data || null;
+      } catch {
+        return null;
+      }
+    },
+    refetchInterval: (query) => {
+      // Fast 1.5s polling while a task is running; 5s when idle
+      return query.state.data ? 1500 : 5000;
+    },
+    enabled: Boolean(activeJobId),
+  });
+
+  const isTaskRunning = Boolean(
+    activeTask && (activeTask.status === 'running' || activeTask.status === 'pending')
+  );
+
   const handleStartScoring = async () => {
     try {
       await startScoring();
-      toast.success('AI scoring task initiated! Real-time progress is streaming.');
+      toast.success('AI scoring initiated! Analyzing candidate qualifications.');
+      queryClient.invalidateQueries({ queryKey: ['activeTask', activeJobId] });
     } catch (err: any) {
       toast.error(`Scoring failed to start: ${err.message}`);
     }
@@ -38,7 +65,9 @@ export const CandidateWorkspace: React.FC = () => {
   const handleStartSourcing = async () => {
     try {
       await startSourcing(8);
-      toast.success('Candidate sourcing started from Web Search!');
+      toast.success('Live candidate sourcing initiated via Google Search (Serper API)!');
+      queryClient.invalidateQueries({ queryKey: ['activeTask', activeJobId] });
+      queryClient.invalidateQueries({ queryKey: ['candidates', activeJobId] });
     } catch (err: any) {
       toast.error(`Sourcing failed to start: ${err.message}`);
     }
@@ -62,6 +91,9 @@ export const CandidateWorkspace: React.FC = () => {
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
               {candidates.length} Profiles
             </span>
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+              <Globe className="w-2.5 h-2.5 text-indigo-500" /> Serper Live Search
+            </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
             Role: <span className="font-semibold text-slate-700">{activeJob?.title}</span>
@@ -81,16 +113,17 @@ export const CandidateWorkspace: React.FC = () => {
           <Button
             size="sm"
             variant="outline"
-            isLoading={isStartingSourcing}
+            isLoading={isStartingSourcing || (isTaskRunning && activeTask?.type === 'sourcing')}
             onClick={handleStartSourcing}
+            title="Search and extract real candidate profiles using Serper Dev API"
           >
-            <Search className="w-3.5 h-3.5 mr-1" /> Source Web (8)
+            <Search className="w-3.5 h-3.5 mr-1 text-indigo-600" /> Source Web (8)
           </Button>
 
           <Button
             size="sm"
             variant="outline"
-            isLoading={isStartingScoring}
+            isLoading={isStartingScoring || (isTaskRunning && activeTask?.type === 'scoring')}
             onClick={handleStartScoring}
           >
             <Sparkles className="w-3.5 h-3.5 mr-1" /> Run Scoring
@@ -111,6 +144,9 @@ export const CandidateWorkspace: React.FC = () => {
         <CandidateTable
           candidates={candidates}
           isLoading={isLoading}
+          activeTask={activeTask}
+          onStartSourcing={handleStartSourcing}
+          onOpenUploadCsv={() => setIsCsvModalOpen(true)}
           onSelectCandidate={(c) => setSelectedCandidate(c)}
           onStatusChange={(id, status) => updateStatus({ candidateId: id, status })}
           onBulkReview={(ids, decision) => bulkReview({ candidateIds: ids, decision })}
@@ -134,4 +170,3 @@ export const CandidateWorkspace: React.FC = () => {
     </div>
   );
 };
-

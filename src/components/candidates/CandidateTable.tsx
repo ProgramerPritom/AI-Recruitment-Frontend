@@ -13,11 +13,17 @@ import {
   CheckSquare,
   Square,
   Users,
+  Loader2,
+  Globe,
+  Upload,
 } from 'lucide-react';
 
 interface CandidateTableProps {
   candidates: Candidate[];
   isLoading: boolean;
+  activeTask?: any;
+  onStartSourcing?: () => void;
+  onOpenUploadCsv?: () => void;
   onSelectCandidate: (candidate: Candidate) => void;
   onStatusChange: (id: string, status: CandidateStatus) => Promise<any>;
   onBulkReview: (ids: string[], decision: 'accept' | 'reject') => Promise<any>;
@@ -40,6 +46,9 @@ const STATUS_FILTERS: Array<{ id: string; label: string }> = [
 export const CandidateTable: React.FC<CandidateTableProps> = ({
   candidates,
   isLoading,
+  activeTask,
+  onStartSourcing,
+  onOpenUploadCsv,
   onSelectCandidate,
   onStatusChange,
   onBulkReview,
@@ -48,6 +57,8 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+
+  const isTaskRunning = activeTask && (activeTask.status === 'running' || activeTask.status === 'pending');
 
   // Filter candidates
   const filteredCandidates = useMemo(() => {
@@ -162,6 +173,37 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
         </div>
       </div>
 
+      {/* Active Live Sourcing Progress Indicator Banner */}
+      {isTaskRunning && (
+        <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-indigo-50 border-b border-indigo-100 px-4 py-2.5 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 text-indigo-900 font-medium">
+            <Loader2 className="w-3.5 h-3.5 text-indigo-600 animate-spin shrink-0" />
+            <span>
+              <strong className="text-indigo-800">
+                {activeTask.type === 'sourcing' ? 'Google Serper Live Sourcing' : 'AI Match Scoring'}:
+              </strong>{' '}
+              <span className="capitalize text-indigo-700">{activeTask.phase || 'Querying real-time profiles...'}</span>
+              {activeTask.totalCount > 0 && (
+                <span className="ml-1 text-indigo-600">
+                  ({activeTask.processedCount || 0} of {activeTask.totalCount} completed)
+                </span>
+              )}
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5 w-44">
+            <div className="flex-1 bg-indigo-200/60 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300"
+                style={{ width: `${Math.max(10, activeTask.progress || 20)}%` }}
+              />
+            </div>
+            <span className="text-[11px] font-bold text-indigo-800">
+              {activeTask.progress || 20}%
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Bulk Action Bar (when rows are selected) */}
       {selectedIds.length > 0 && (
         <div className="bg-indigo-50/70 border-b border-indigo-100 px-4 py-2 flex items-center justify-between text-xs text-indigo-900">
@@ -221,25 +263,68 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {isLoading ? (
-              <tr>
-                <td colSpan={6} className="py-12 text-center text-slate-400">
-                  Loading candidate records...
-                </td>
-              </tr>
+            {/* 1. Loading or Active Sourcing Skeletons */}
+            {(isLoading || (isTaskRunning && candidates.length === 0)) ? (
+              [1, 2, 3, 4, 5].map((i) => (
+                <tr key={`skeleton-${i}`} className="animate-pulse">
+                  <td className="py-3 px-3">
+                    <div className="w-4 h-4 bg-slate-200 rounded" />
+                  </td>
+                  <td className="py-3 px-3">
+                    <div className="space-y-1.5">
+                      <div className="h-3.5 bg-slate-200 rounded w-36" />
+                      <div className="h-2.5 bg-slate-100 rounded w-48" />
+                    </div>
+                  </td>
+                  <td className="py-3 px-3">
+                    <div className="flex gap-1.5">
+                      <div className="h-4 bg-slate-200 rounded w-14" />
+                      <div className="h-4 bg-slate-200 rounded w-16" />
+                      <div className="h-4 bg-slate-100 rounded w-10" />
+                    </div>
+                  </td>
+                  <td className="py-3 px-3">
+                    <div className="h-5 bg-slate-200 rounded-full w-10" />
+                  </td>
+                  <td className="py-3 px-3">
+                    <div className="h-5 bg-slate-200 rounded-full w-16" />
+                  </td>
+                  <td className="py-3 px-3 text-right">
+                    <div className="h-6 bg-slate-100 rounded w-16 ml-auto" />
+                  </td>
+                </tr>
+              ))
             ) : filteredCandidates.length === 0 ? (
+              /* 2. Empty State with One-Click Sourcing */
               <tr>
                 <td colSpan={6} className="py-12 text-center text-slate-400">
-                  <div className="space-y-1">
-                    <Users className="w-8 h-8 text-slate-300 mx-auto" />
-                    <p className="font-medium text-slate-600 text-xs">No candidates found in this view</p>
-                    <p className="text-[11px] text-slate-400">
-                      Use the Copilot chat to source candidates or upload a CSV file.
-                    </p>
+                  <div className="max-w-sm mx-auto space-y-2.5">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-700 text-xs">No candidates found in this view</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Start live sourcing from Google Search (Serper API) or import candidate profiles via CSV.
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 pt-2">
+                      {onStartSourcing && (
+                        <Button size="sm" variant="outline" onClick={onStartSourcing}>
+                          <Globe className="w-3.5 h-3.5 mr-1 text-indigo-600" /> Source Web (8)
+                        </Button>
+                      )}
+                      {onOpenUploadCsv && (
+                        <Button size="sm" variant="primary" onClick={onOpenUploadCsv}>
+                          <Upload className="w-3.5 h-3.5 mr-1" /> Upload CSV
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </td>
               </tr>
             ) : (
+              /* 3. Populated Candidate Rows */
               filteredCandidates.map((candidate) => {
                 const isSelected = selectedIds.includes(candidate._id);
 
@@ -275,6 +360,7 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
                             rel="noreferrer"
                             onClick={(e) => e.stopPropagation()}
                             className="text-slate-400 hover:text-indigo-600"
+                            title="Open LinkedIn Profile"
                           >
                             <ExternalLink className="w-3 h-3" />
                           </a>
@@ -283,7 +369,10 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
                       <div className="text-[11px] text-slate-500 flex items-center gap-2">
                         <span>{candidate.email || 'No email'}</span>
                         <span className="text-slate-300">•</span>
-                        <span className="capitalize">{candidate.source}</span>
+                        <span className="capitalize flex items-center gap-1">
+                          {candidate.source === 'web' && <Globe className="w-2.5 h-2.5 text-indigo-500" />}
+                          {candidate.source}
+                        </span>
                       </div>
                     </td>
 
@@ -313,7 +402,7 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
                         {candidate.scoreReason && (
                           <div className="group relative">
                             <Info className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
-                            <div className="hidden group-hover:block absolute z-30 bottom-full left-0 mb-1 w-60 p-2 bg-slate-800 text-white rounded text-[11px] shadow-lg pointer-events-none">
+                            <div className="hidden group-hover:block absolute z-30 bottom-full left-0 mb-1 w-64 p-2.5 bg-slate-800 text-white rounded-lg text-[11px] leading-relaxed shadow-lg pointer-events-none">
                               {candidate.scoreReason}
                             </div>
                           </div>
@@ -337,14 +426,14 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
                             <button
                               onClick={() => onStatusChange(candidate._id, 'accepted')}
                               className="p-1 text-emerald-600 hover:bg-emerald-50 rounded border border-emerald-200"
-                              title="Accept"
+                              title="Accept candidate"
                             >
                               <Check className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => onStatusChange(candidate._id, 'rejected')}
                               className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded border border-slate-200"
-                              title="Reject"
+                              title="Reject candidate"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -369,4 +458,3 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
     </div>
   );
 };
-
