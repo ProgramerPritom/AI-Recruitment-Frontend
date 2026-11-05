@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { api } from '../services/api';
 import { TaskProgress } from '../types';
 
 interface SseContextType {
@@ -20,14 +22,26 @@ export const SseProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       eventSourceRef.current.close();
     }
 
-    const sseUrl = `http://localhost:5000/api/tasks/${taskId}/events`;
+    const sseUrl = `${api.defaults.baseURL}/tasks/${taskId}/events`;
     const es = new EventSource(sseUrl);
     eventSourceRef.current = es;
+
+    const refreshTaskQueries = () => {
+      queryClient.invalidateQueries({ queryKey: ['candidates'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      queryClient.invalidateQueries({ queryKey: ['activities'] });
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['campaignDeliveries'] });
+    };
 
     es.addEventListener('task.progress', (e) => {
       try {
         const payload: TaskProgress = JSON.parse(e.data);
         setActiveTask(payload);
+        if (payload.status === 'completed') refreshTaskQueries();
+        if (payload.status === 'failed') {
+          toast.error(`Background task failed: ${payload.error || 'Unknown error occurred.'}`);
+        }
       } catch {}
     });
 
@@ -35,10 +49,7 @@ export const SseProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         const payload: TaskProgress = JSON.parse(e.data);
         setActiveTask(payload);
-        // Invalidate queries so candidate tables and dashboard reflect the new data!
-        queryClient.invalidateQueries({ queryKey: ['candidates'] });
-        queryClient.invalidateQueries({ queryKey: ['stats'] });
-        queryClient.invalidateQueries({ queryKey: ['activities'] });
+        refreshTaskQueries();
       } catch {}
     });
 
@@ -46,6 +57,8 @@ export const SseProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         const payload: TaskProgress = JSON.parse(e.data);
         setActiveTask(payload);
+        toast.error(`Background task failed: ${payload.error || 'Unknown error occurred.'}`);
+        refreshTaskQueries();
       } catch {}
     });
 
@@ -84,4 +97,3 @@ export const useSse = (): SseContextType => {
   }
   return context;
 };
-

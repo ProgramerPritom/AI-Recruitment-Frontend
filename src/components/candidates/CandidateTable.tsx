@@ -19,6 +19,7 @@ import {
   FileText,
   Trash2,
   RotateCcw,
+  Calendar,
 } from 'lucide-react';
 
 interface CandidateTableProps {
@@ -463,6 +464,16 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="flex items-center justify-end gap-1">
+                        {candidate.status === 'interested' && (
+                          <button
+                            onClick={() => onSelectCandidate(candidate)}
+                            className="px-2 py-0.5 text-[11px] text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded border border-indigo-200 font-semibold flex items-center gap-1 shadow-sm"
+                            title="Schedule Interview Slot"
+                          >
+                            <Calendar className="w-3 h-3 text-indigo-600" /> Book Meeting
+                          </button>
+                        )}
+
                         {candidate.status === 'sourced' && (
                           <>
                             <button

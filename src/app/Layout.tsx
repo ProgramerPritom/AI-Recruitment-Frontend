@@ -7,6 +7,7 @@ import {
   Users,
   Send,
   BarChart3,
+  Calendar,
   History,
   Plus,
   Bot,
@@ -19,18 +20,20 @@ interface LayoutProps {
   candidatesComponent: React.ReactNode;
   outreachComponent: React.ReactNode;
   analyticsComponent: React.ReactNode;
+  meetingsComponent: React.ReactNode;
   activityComponent: React.ReactNode;
   onOpenCreateJob: () => void;
   onOpenManageJobs: () => void;
 }
 
-export type WorkspaceTab = 'candidates' | 'outreach' | 'analytics' | 'activity';
+export type WorkspaceTab = 'candidates' | 'outreach' | 'meetings' | 'analytics' | 'activity';
 
 export const Layout: React.FC<LayoutProps> = ({
   chatComponent,
   candidatesComponent,
   outreachComponent,
   analyticsComponent,
+  meetingsComponent,
   activityComponent,
   onOpenCreateJob,
   onOpenManageJobs,
@@ -41,6 +44,7 @@ export const Layout: React.FC<LayoutProps> = ({
   const tabs: Array<{ id: WorkspaceTab; label: string; icon: React.ReactNode }> = [
     { id: 'candidates', label: 'Candidates', icon: <Users className="w-4 h-4" /> },
     { id: 'outreach', label: 'Outreach', icon: <Send className="w-4 h-4" /> },
+    { id: 'meetings', label: 'Meetings', icon: <Calendar className="w-4 h-4" /> },
     { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="w-4 h-4" /> },
     { id: 'activity', label: 'Audit Trail', icon: <History className="w-4 h-4" /> },
   ];
@@ -161,6 +165,7 @@ export const Layout: React.FC<LayoutProps> = ({
           <div className="flex-1 overflow-y-auto p-6">
             {activeTab === 'candidates' && candidatesComponent}
             {activeTab === 'outreach' && outreachComponent}
+            {activeTab === 'meetings' && meetingsComponent}
             {activeTab === 'analytics' && analyticsComponent}
             {activeTab === 'activity' && activityComponent}
           </div>
@@ -169,4 +174,3 @@ export const Layout: React.FC<LayoutProps> = ({
     </div>
   );
 };
-

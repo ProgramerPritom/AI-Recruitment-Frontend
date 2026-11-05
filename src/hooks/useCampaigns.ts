@@ -2,9 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { Campaign, CampaignDelivery } from '../types';
 import { useJob } from '../context/JobContext';
+import { useSse } from '../context/SseContext';
 
 export const useCampaigns = () => {
   const { activeJobId } = useJob();
+  const { subscribeToTask } = useSse();
   const queryClient = useQueryClient();
 
   const {
@@ -59,11 +61,12 @@ export const useCampaigns = () => {
       const res: any = await api.post(`/campaigns/${campaignId}/send`, { stepNumber });
       return res.data?.data || res.data;
     },
-    onSuccess: () => {
+    onSuccess: (task: { taskId?: string }) => {
       queryClient.invalidateQueries({ queryKey: ['campaigns', activeJobId] });
       queryClient.invalidateQueries({ queryKey: ['candidates', activeJobId] });
       queryClient.invalidateQueries({ queryKey: ['stats', activeJobId] });
       queryClient.invalidateQueries({ queryKey: ['activities', activeJobId] });
+      if (task?.taskId) subscribeToTask(task.taskId);
     },
   });
 
@@ -82,4 +85,3 @@ export const useCampaigns = () => {
     isSending: sendMutation.isPending,
   };
 };
-

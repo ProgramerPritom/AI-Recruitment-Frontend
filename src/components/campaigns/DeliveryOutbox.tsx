@@ -6,30 +6,32 @@ import { Badge } from '../common/Badge';
 import { RefreshCw, Inbox, AlertCircle, ShieldCheck } from 'lucide-react';
 
 interface DeliveryOutboxProps {
-  campaignId?: string;
+  jobId?: string;
 }
 
-export const DeliveryOutbox: React.FC<DeliveryOutboxProps> = ({ campaignId }) => {
+export const DeliveryOutbox: React.FC<DeliveryOutboxProps> = ({ jobId }) => {
   const {
     data: deliveries = [],
     isLoading,
     refetch,
     isRefetching,
   } = useQuery<CampaignDelivery[]>({
-    queryKey: ['campaignDeliveries', campaignId],
+    queryKey: ['campaignDeliveries', jobId],
     queryFn: async () => {
-      if (campaignId) {
-        const res: any = await api.get(`/campaigns/${campaignId}/deliveries`);
+      if (jobId) {
+        const res: any = await api.get(`/jobs/${jobId}/deliveries`);
         return res.data?.data || res.data || [];
       }
-      const res: any = await api.get('/email/outbox');
-      return res.data?.data || res.data || [];
+      return [];
     },
+    enabled: Boolean(jobId),
     refetchInterval: 5000,
   });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'sending':
+        return <Badge variant="default">SENDING</Badge>;
       case 'sent':
         return <Badge variant="success">SENT</Badge>;
       case 'suppressed':
@@ -48,7 +50,7 @@ export const DeliveryOutbox: React.FC<DeliveryOutboxProps> = ({ campaignId }) =>
         <div className="flex items-center gap-2">
           <Inbox className="w-4 h-4 text-indigo-600" />
           <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-            Email Delivery Outbox ({deliveries.length})
+            All Campaign Deliveries ({deliveries.length})
           </h4>
         </div>
 
@@ -88,7 +90,7 @@ export const DeliveryOutbox: React.FC<DeliveryOutboxProps> = ({ campaignId }) =>
                     <Inbox className="w-6 h-6 text-slate-300 mx-auto" />
                     <p className="text-xs text-slate-500 font-medium">No outreach emails dispatched yet</p>
                     <p className="text-[11px] text-slate-400">
-                      Approved campaign dispatches will log real-time delivery status here.
+                      Sent, failed, and in-progress messages for this job will appear here.
                     </p>
                   </div>
                 </td>
@@ -104,6 +106,7 @@ export const DeliveryOutbox: React.FC<DeliveryOutboxProps> = ({ campaignId }) =>
                   </td>
                   <td className="py-2.5 px-3 text-slate-600">
                     Step {delivery.stepNumber}
+                    {delivery.delayDays !== undefined && ` (Day ${delivery.delayDays})`}
                   </td>
                   <td className="py-2.5 px-3">
                     <div className="flex items-center gap-1.5">
@@ -127,7 +130,11 @@ export const DeliveryOutbox: React.FC<DeliveryOutboxProps> = ({ campaignId }) =>
                     </div>
                   </td>
                   <td className="py-2.5 px-3 text-right text-slate-400 text-[11px]">
-                    {delivery.sentAt ? new Date(delivery.sentAt).toLocaleTimeString() : 'Pending'}
+                    {delivery.sentAt
+                      ? new Date(delivery.sentAt).toLocaleString()
+                      : delivery.status === 'sending'
+                      ? 'Sending...'
+                      : '—'}
                   </td>
                 </tr>
               ))
@@ -138,4 +145,3 @@ export const DeliveryOutbox: React.FC<DeliveryOutboxProps> = ({ campaignId }) =>
     </div>
   );
 };
-

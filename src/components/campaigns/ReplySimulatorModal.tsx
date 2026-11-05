@@ -70,7 +70,11 @@ export const ReplySimulatorModal: React.FC<ReplySimulatorModalProps> = ({
         content: replyText.trim(),
       });
 
-      setSimulatedResult(res.data?.data || res.data);
+      const resultData = res.data?.data || res.data;
+      setSimulatedResult(resultData);
+      if (resultData.classification === 'Wants a meeting' || resultData.classification === 'Interested') {
+        setShowCalendarBooking(true);
+      }
       queryClient.invalidateQueries({ queryKey: ['candidates', jobId] });
       queryClient.invalidateQueries({ queryKey: ['stats', jobId] });
       queryClient.invalidateQueries({ queryKey: ['activities', jobId] });
@@ -201,17 +205,24 @@ export const ReplySimulatorModal: React.FC<ReplySimulatorModalProps> = ({
               <div className="space-y-1.5">
                 <span className="font-semibold text-slate-700">AI Suggested Response:</span>
                 <div className="bg-white p-3 rounded-lg border border-slate-200 text-slate-800 font-mono text-[11.5px] whitespace-pre-wrap leading-relaxed">
-                  {simulatedResult.responseDraft}
+                  {simulatedResult.responseDraft.replace(/\[Scheduling Link\]/g, 'https://calendly.com/aironauts-recruiting/30min')}
                 </div>
               </div>
             )}
 
-            {showCalendarBooking && selectedCandidate && (
-              <MeetingSlotCard
-                candidateId={selectedCandidate._id}
-                candidateName={selectedCandidate.name}
-                onBooked={() => setShowCalendarBooking(false)}
-              />
+            {(showCalendarBooking || simulatedResult.classification === 'Wants a meeting' || simulatedResult.classification === 'Interested') && selectedCandidate && (
+              <div className="border border-indigo-100 rounded-xl bg-white shadow-sm overflow-hidden">
+                <MeetingSlotCard
+                  candidateId={selectedCandidate._id}
+                  candidateName={selectedCandidate.name}
+                  onBooked={() => {
+                    queryClient.invalidateQueries({ queryKey: ['candidates', jobId] });
+                    queryClient.invalidateQueries({ queryKey: ['stats', jobId] });
+                    queryClient.invalidateQueries({ queryKey: ['activities', jobId] });
+                    toast.success(`Meeting confirmed with ${selectedCandidate.name}! Moved to Meeting Booked.`);
+                  }}
+                />
+              </div>
             )}
 
             {replySentSuccess ? (

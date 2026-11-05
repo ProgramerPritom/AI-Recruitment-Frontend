@@ -4,7 +4,8 @@ import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { Candidate, CandidateStatus } from '../../types';
-import { ExternalLink, Mail, Award, CheckCircle, XCircle, Trash2, RotateCcw } from 'lucide-react';
+import { ExternalLink, Mail, Award, CheckCircle, XCircle, Trash2, RotateCcw, Calendar } from 'lucide-react';
+import { MeetingSlotCard } from '../cards/MeetingSlotCard';
 
 interface CandidateDetailModalProps {
   candidate: Candidate | null;
@@ -140,6 +141,16 @@ export const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
             <p className="text-xs text-slate-600 bg-white border border-slate-200 rounded-lg p-3 leading-relaxed">
               {candidate.experienceSummary}
             </p>
+          </div>
+        )}
+
+        {/* Interview Scheduling / Meeting Slots */}
+        {(candidate.status === 'interested' || candidate.status === 'meeting_booked' || candidate.status === 'contacted' || candidate.status === 'replied') && (
+          <div className="pt-3 border-t border-slate-100">
+            <MeetingSlotCard
+              candidateId={candidate._id}
+              candidateName={candidate.name}
+            />
           </div>
         )}
 

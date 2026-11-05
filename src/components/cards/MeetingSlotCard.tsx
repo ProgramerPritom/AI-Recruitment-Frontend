@@ -4,7 +4,9 @@ import { Calendar, Check, Clock } from 'lucide-react';
 import { Button } from '../common/Button';
 import { api } from '../../services/api';
 import { useJob } from '../../context/JobContext';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Meeting } from '../../types';
+import { MeetingInviteAction } from '../meetings/MeetingInviteAction';
 
 interface MeetingSlotCardProps {
   candidateId: string;
@@ -28,22 +30,44 @@ export const MeetingSlotCard: React.FC<MeetingSlotCardProps> = ({
   const queryClient = useQueryClient();
   const [selectedSlot, setSelectedSlot] = useState(DEFAULT_SLOTS[0]);
   const [isBooking, setIsBooking] = useState(false);
-  const [confirmedSlot, setConfirmedSlot] = useState<string | null>(null);
+  const {
+    data: meetings = [],
+    isLoading: isLoadingMeetings,
+    isError: isMeetingsError,
+    error: meetingsError,
+  } = useQuery<Meeting[]>({
+    queryKey: ['meetings', activeJobId],
+    queryFn: async () => {
+      if (!activeJobId) return [];
+      const response: any = await api.get(`/jobs/${activeJobId}/meetings`);
+      return response.data?.data || response.data || [];
+    },
+    enabled: Boolean(activeJobId),
+  });
+  const savedMeeting =
+    meetings.find(
+      (meeting) =>
+        (typeof meeting.candidateId === 'string'
+          ? meeting.candidateId
+          : meeting.candidateId._id) === candidateId &&
+        meeting.status === 'confirmed'
+    ) ||
+    null;
 
   const handleConfirm = async () => {
     setIsBooking(true);
     try {
-      const res = await api.post(`/candidates/${candidateId}/book-meeting`, {
+      const response: any = await api.post(`/candidates/${candidateId}/book-meeting`, {
         slotTime: selectedSlot,
         notes: `Initial technical screening booked via AI Co-Worker`,
       });
 
-      setConfirmedSlot(selectedSlot);
+      await queryClient.invalidateQueries({ queryKey: ['meetings', activeJobId] });
       queryClient.invalidateQueries({ queryKey: ['candidates', activeJobId] });
       queryClient.invalidateQueries({ queryKey: ['stats', activeJobId] });
       queryClient.invalidateQueries({ queryKey: ['activities', activeJobId] });
       toast.success(`Interview confirmed with ${candidateName}!`);
-      if (onBooked) onBooked(res.data);
+      if (onBooked) onBooked(response.data);
     } catch (err: any) {
       toast.error(`Meeting booking failed: ${err.message}`);
     } finally {
@@ -51,19 +75,38 @@ export const MeetingSlotCard: React.FC<MeetingSlotCardProps> = ({
     }
   };
 
-  if (confirmedSlot) {
+  if (savedMeeting) {
     return (
-      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 my-2.5 max-w-lg flex items-center gap-2.5 text-xs text-emerald-800">
-        <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
-          <Check className="w-3 h-3" />
+      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 my-2.5 max-w-lg space-y-3 text-xs text-emerald-800">
+        <div className="flex items-start gap-2.5">
+          <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
+            <Check className="w-3 h-3" />
+          </div>
+          <div>
+            <span className="font-semibold">Interview Confirmed:</span> Scheduled with{' '}
+            <span className="font-semibold">{candidateName}</span> for{' '}
+            <span className="underline">{savedMeeting.slotTime}</span>.
+          </div>
         </div>
-        <div>
-          <span className="font-semibold">Interview Confirmed:</span> Scheduled with{' '}
-          <span className="font-semibold">{candidateName}</span> for{' '}
-          <span className="underline">{confirmedSlot}</span>. Candidate moved to{' '}
-          <span className="font-semibold">Meeting Booked</span>.
-        </div>
+        <MeetingInviteAction
+          meeting={savedMeeting}
+          onSent={() => {
+            queryClient.invalidateQueries({ queryKey: ['meetings', activeJobId] });
+          }}
+        />
       </div>
+    );
+  }
+
+  if (isLoadingMeetings) {
+    return <p className="p-3 text-xs text-slate-500">Checking saved interview times...</p>;
+  }
+
+  if (isMeetingsError) {
+    return (
+      <p className="p-3 text-xs text-rose-600">
+        Could not check saved interviews: {meetingsError instanceof Error ? meetingsError.message : 'Unknown error'}
+      </p>
     );
   }
 
@@ -115,4 +158,3 @@ export const MeetingSlotCard: React.FC<MeetingSlotCardProps> = ({
     </div>
   );
 };
-

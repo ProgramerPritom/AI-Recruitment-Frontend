@@ -66,6 +66,11 @@ export const CampaignStudio: React.FC<CampaignStudioProps> = ({
   }
 
   const currentStep = steps[activeStepIndex] || steps[0];
+  const dispatchLabel = currentStep
+    ? currentStep.delayDays === 0
+      ? 'Day 0 email'
+      : `Day ${currentStep.delayDays} follow-up`
+    : 'selected step';
 
   const handleStepChange = (field: 'subject' | 'body', value: string) => {
     setSteps((prev) =>
@@ -79,10 +84,28 @@ export const CampaignStudio: React.FC<CampaignStudioProps> = ({
       await onUpdateDraft(campaign._id, steps);
       setIsEditing(false);
       toast.success('Campaign email draft saved successfully');
-    } catch (err: any) {
-      toast.error(`Save failed: ${err.message}`);
+    } catch (err: unknown) {
+      toast.error(`Save failed: ${err instanceof Error ? err.message : 'Please try again.'}`);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleApprove = async () => {
+    try {
+      await onApprove(campaign._id);
+      toast.success('Campaign approved and ready to dispatch.');
+    } catch (err: unknown) {
+      toast.error(`Approval failed: ${err instanceof Error ? err.message : 'Please try again.'}`);
+    }
+  };
+
+  const handleSend = async () => {
+    try {
+      await onSend(campaign._id, currentStep?.stepNumber || 1);
+      toast.success('Outreach dispatch started. Delivery results will appear in the outbox.');
+    } catch (err: unknown) {
+      toast.error(`Dispatch failed: ${err instanceof Error ? err.message : 'Please try again.'}`);
     }
   };
 
@@ -100,7 +123,7 @@ export const CampaignStudio: React.FC<CampaignStudioProps> = ({
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Target Audience: <span className="font-semibold text-slate-700">{acceptedCandidatesCount} accepted candidate{acceptedCandidatesCount === 1 ? '' : 's'}</span>
+            Outreach Pipeline: <span className="font-semibold text-slate-700">{acceptedCandidatesCount} candidate{acceptedCandidatesCount === 1 ? '' : 's'}</span>
           </p>
         </div>
 
@@ -137,6 +160,9 @@ export const CampaignStudio: React.FC<CampaignStudioProps> = ({
           </button>
         ))}
       </div>
+      <p className="px-4 pt-2 text-[11px] text-slate-500">
+        Select a step and dispatch it manually. Follow-ups are available after the previous step is sent; each candidate receives each step only once.
+      </p>
 
       {/* Step Editor / Viewer */}
       {currentStep && (
@@ -189,16 +215,16 @@ export const CampaignStudio: React.FC<CampaignStudioProps> = ({
                 <Check className="w-3 h-3" />
               </div>
               <div>
-                <span className="font-semibold">Governance Approved:</span> Sequence is verified. Ready for safe dispatch.
+                <span className="font-semibold">Governance Approved:</span> Sequence is verified. Dispatch the selected step when ready.
               </div>
             </div>
             <Button
               variant="primary"
               size="sm"
               isLoading={isSending}
-              onClick={() => onSend(campaign._id, currentStep?.stepNumber || 1)}
+              onClick={handleSend}
             >
-              <Send className="w-3.5 h-3.5 mr-1" /> Dispatch Step {currentStep?.stepNumber}
+              <Send className="w-3.5 h-3.5 mr-1" /> Dispatch {dispatchLabel}
             </Button>
           </>
         ) : (
@@ -213,7 +239,7 @@ export const CampaignStudio: React.FC<CampaignStudioProps> = ({
               variant="primary"
               size="sm"
               isLoading={isApproving}
-              onClick={() => onApprove(campaign._id)}
+              onClick={handleApprove}
             >
               <Check className="w-3.5 h-3.5 mr-1" /> Approve Campaign
             </Button>
@@ -223,4 +249,3 @@ export const CampaignStudio: React.FC<CampaignStudioProps> = ({
     </div>
   );
 };
-

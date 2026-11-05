@@ -10,6 +10,7 @@ import { CandidateWorkspace } from './components/candidates/CandidateWorkspace';
 import { OutreachWorkspace } from './components/campaigns/OutreachWorkspace';
 import { AnalyticsWorkspace } from './components/dashboard/AnalyticsWorkspace';
 import { ActivityWorkspace } from './components/dashboard/ActivityWorkspace';
+import { MeetingsWorkspace } from './components/meetings/MeetingsWorkspace';
 
 const WorkspaceShell: React.FC = () => {
   const { activeJob } = useJob();
@@ -20,6 +21,7 @@ const WorkspaceShell: React.FC = () => {
   const OutreachView = <OutreachWorkspace />;
   const AnalyticsView = <AnalyticsWorkspace />;
   const ActivityView = <ActivityWorkspace />;
+  const MeetingsView = <MeetingsWorkspace />;
 
   return (
     <>
@@ -29,6 +31,7 @@ const WorkspaceShell: React.FC = () => {
         candidatesComponent={CandidatesView}
         outreachComponent={OutreachView}
         analyticsComponent={AnalyticsView}
+        meetingsComponent={MeetingsView}
         activityComponent={ActivityView}
         onOpenCreateJob={() => setIsCreateJobOpen(true)}
         onOpenManageJobs={() => setIsManageJobsOpen(true)}

@@ -76,11 +76,12 @@ export interface CampaignDelivery {
   campaignId: string;
   candidateId: string;
   stepNumber: number;
+  delayDays?: number;
   recipientEmail: string;
   subject: string;
   body: string;
   sentAt?: string;
-  status: 'sent' | 'failed' | 'suppressed';
+  status: 'sending' | 'sent' | 'failed' | 'suppressed';
   error?: string;
 }
 
@@ -97,7 +98,7 @@ export interface Reply {
 
 export interface Meeting {
   _id: string;
-  candidateId: {
+  candidateId: string | {
     _id: string;
     name: string;
     email?: string;
@@ -107,6 +108,9 @@ export interface Meeting {
   slotTime: string;
   status: 'requested' | 'confirmed' | 'cancelled';
   confirmedAt: string;
+  invitationStatus?: 'not_sent' | 'sending' | 'sent' | 'failed';
+  invitationSentAt?: string;
+  invitationError?: string;
   notes?: string;
 }
 
@@ -162,4 +166,3 @@ export interface FunnelStats {
     failed: number;
   };
 }
-

@@ -26,7 +26,9 @@ export const OutreachWorkspace: React.FC = () => {
   const { candidates } = useCandidates();
   const [isReplySimulatorOpen, setIsReplySimulatorOpen] = useState(false);
 
-  const acceptedCount = candidates.filter((c) => c.status === 'accepted').length;
+  const outreachCandidateCount = candidates.filter(
+    (candidate) => candidate.status === 'accepted' || candidate.status === 'contacted'
+  ).length;
 
   if (!activeJobId) {
     return (
@@ -71,7 +73,7 @@ export const OutreachWorkspace: React.FC = () => {
       <div className="shrink-0">
         <CampaignStudio
           campaign={activeCampaign}
-          acceptedCandidatesCount={acceptedCount}
+          acceptedCandidatesCount={outreachCandidateCount}
           onApprove={(id) => approveCampaign(id)}
           onSend={(id, step) => sendCampaign({ campaignId: id, stepNumber: step })}
           onUpdateDraft={(id, steps) => updateDraft({ campaignId: id, steps })}
@@ -84,7 +86,7 @@ export const OutreachWorkspace: React.FC = () => {
 
       {/* Virtual Outbox Delivery Monitor */}
       <div className="flex-1 min-h-[300px]">
-        <DeliveryOutbox campaignId={activeCampaign?._id} />
+        <DeliveryOutbox jobId={activeJobId} />
       </div>
 
       {/* Reply Simulator Modal */}
@@ -97,4 +99,3 @@ export const OutreachWorkspace: React.FC = () => {
     </div>
   );
 };
-
