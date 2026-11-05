@@ -20,6 +20,9 @@ import {
   Trash2,
   RotateCcw,
   Calendar,
+  UserCheck,
+  Sparkles,
+  Award,
 } from 'lucide-react';
 
 interface CandidateTableProps {
@@ -472,6 +475,60 @@ export const CandidateTable: React.FC<CandidateTableProps> = ({
                           >
                             <Calendar className="w-3 h-3 text-indigo-600" /> Book Meeting
                           </button>
+                        )}
+
+                        {candidate.status === 'meeting_booked' && (
+                          <>
+                            <button
+                              onClick={() => onStatusChange(candidate._id, 'interviewed')}
+                              className="px-2 py-0.5 text-[11px] text-sky-700 bg-sky-50 hover:bg-sky-100 rounded border border-sky-200 font-semibold flex items-center gap-1 shadow-sm"
+                              title="Mark Interview Conducted"
+                            >
+                              <UserCheck className="w-3 h-3 text-sky-600" /> Interviewed
+                            </button>
+                            <button
+                              onClick={() => onStatusChange(candidate._id, 'hired')}
+                              className="px-2 py-0.5 text-[11px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-300 font-bold flex items-center gap-1 shadow-sm"
+                              title="Hire this candidate"
+                            >
+                              <Sparkles className="w-3 h-3 text-emerald-600" /> Hire
+                            </button>
+                          </>
+                        )}
+
+                        {candidate.status === 'interviewed' && (
+                          <>
+                            <button
+                              onClick={() => onStatusChange(candidate._id, 'shortlisted')}
+                              className="px-2 py-0.5 text-[11px] text-amber-700 bg-amber-50 hover:bg-amber-100 rounded border border-amber-200 font-semibold flex items-center gap-1 shadow-sm"
+                              title="Add to Shortlist"
+                            >
+                              <Award className="w-3 h-3 text-amber-600" /> Shortlist
+                            </button>
+                            <button
+                              onClick={() => onStatusChange(candidate._id, 'hired')}
+                              className="px-2 py-0.5 text-[11px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-300 font-bold flex items-center gap-1 shadow-sm"
+                              title="Hire this candidate"
+                            >
+                              <Sparkles className="w-3 h-3 text-emerald-600" /> Hire
+                            </button>
+                          </>
+                        )}
+
+                        {candidate.status === 'shortlisted' && (
+                          <button
+                            onClick={() => onStatusChange(candidate._id, 'hired')}
+                            className="px-2.5 py-0.5 text-[11px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-300 font-bold flex items-center gap-1 shadow-sm"
+                            title="Confirm hire for this position"
+                          >
+                            <Sparkles className="w-3 h-3 text-emerald-600" /> Hire Candidate
+                          </button>
+                        )}
+
+                        {candidate.status === 'hired' && (
+                          <span className="px-2 py-0.5 text-[11px] bg-emerald-100 text-emerald-800 rounded font-bold flex items-center gap-1 border border-emerald-200">
+                            🎉 Hired
+                          </span>
                         )}
 
                         {candidate.status === 'sourced' && (
